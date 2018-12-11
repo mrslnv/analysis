@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "## This script filters data - subsetting to the whole weeks\n## result (2015-12-14/2017-06-04) is in file \"time.csv\"\n# reads \"tz.csv\"\n\nlibrary(lubridate)\nlibrary(zoo)\nlibrary(xts)\nlibrary(psych)\nlibrary(forecast)\nlibrary(xtsExtra)\n\n#ignore timezones (avoid the danger of using CET and struggle with daylight changes)\nSys.setenv(TZ='UTC')\n\n\ndt <- read.csv(\"tz.csv\",stringsAsFactors = FALSE)\n\n#Create time series to analyze call frequency (XTS objects)\nt<-ymd_hms(dt$timeStamp)\nts <- xts(rep.int(1,length(t)),as.POSIXct(t))\n\ndaily <- apply.daily(ts,sum)\ndescribe(daily)\n\n#cut off data to whole weeks\n#14.12 - Mon (1680 before = 0.6%)\nplot(daily[\"2015-12-10/2015-12-16\"])\n\ncut_off<-sum(daily[\"2015-12-10/2015-12-13\"])/sum(daily)\npaste(c(\"Cutting off \",cut_off*100,\" %\"), collapse = \"\")\n#5.6. - Mon (925 after = 0.4%)\nplot(daily[\"2017-05-30/2017-06-07\"])\ncut_off<-sum(daily[\"2017-06-05/2017-06-10\"])/sum(daily)\npaste(c(\"Cutting off \",cut_off*100,\" %\"), collapse = \"\")\n\n#Filter data! Analyze <14.12. 2015 (Mon) - 5.6. 2017) (Mon)\nts<-ts[\"2015-12-14/2017-06-04\"]\nwrite.csv(list(\"Time of calls\"=index(ts)),\"time.csv\",row.names = FALSE)\n\npaste(\"Data subset(2015-12-14/2017-06-04) written to time.csv\")\n",
+    "created" : 1498495411852.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1450291252",
+    "id" : "A5BEE506",
+    "lastKnownWriteTime" : 1498495707,
+    "last_content_update" : 1498495707810,
+    "path" : "W:/Code/GoodAI/callcenter_r/filter_data_whole_weeks_only.R",
+    "project_path" : "filter_data_whole_weeks_only.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

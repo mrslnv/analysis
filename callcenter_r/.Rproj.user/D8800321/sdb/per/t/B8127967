@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "## This script assumes that data was filters (see filter_data_whole_weeks_only.R )\n# reads \"time.csv\"\n\nlibrary(lubridate)\nlibrary(zoo)\nlibrary(xts)\nlibrary(psych)\nlibrary(forecast)\nlibrary(xtsExtra)\n\n#ignore timezones (avoid the danger of using CET and struggle with daylight changes)\nSys.setenv(TZ='UTC')\n\ndt <- read.csv(\"time.csv\",stringsAsFactors = FALSE)\n\n#Create time series to analyze call frequency (XTS objects)\nt<-ymd_hms(dt$Time.of.calls)\nts <- xts(rep.int(1,length(t)),as.POSIXct(t))\n\ndaily <- apply.daily(ts,sum)\ndescribe(daily)\n\n#Overall trend of daily rate\nplot.xts(daily,major.ticks=\"months\",major.format=\"%b\", las=2,type=\"l\",lwd=4,\n         main=\"Daily calls (irregular peaks)\")\n\n#Prepare hour rates per days of week\nh<-period.apply(ts, endpoints(ts, \"hours\"), sum)\n#split by day of week\ndow<-split.default(h, format(index(h), \"%a\"))\n#compute avg for every hour of each day of week\ndowAgg <- lapply(dow,function(x) aggregate(x, format(index(x), \"%H\"), mean))  \ndowSum <- do.call(merge, dowAgg)[,c(\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\", \"Sat\",\"Sun\")]\n\nplot(dowSum, type=\"l\", nc=1, ylim=range(dowSum), main=\"Average hourly calls\", \n     las=1,col = c(rep(\"blue\",5),rep(\"navy\",2)))\nboxplot(coredata(dowSum),ylab=\"Num. of calls per hour\",col=\"gray\",at=c(1,2,3,4,5,7,8),\n        yaxt=\"n\", main=\"Call distribution by day of week\")\naxis(2, at = seq(4, 30, by = 1), las=2)\n\n# looking into some peaks - around christmas and new year\nplot.xts(daily[\"2015-12-11/2016-01-20\"],major.ticks=\"days\",major.format=\"%d\")\nplot.xts(daily[\"2016-12-11/2017-01-20\"],major.ticks=\"days\",major.format=\"%d\")\n\n#analysis\n#acf spikes every 7 days, also alot from the previous day\ndacf<-acf(daily,plot=FALSE)\n#:-) it works for xts directly! xtsEstra! acf(ts(coredata(daily),7))\nplot(dacf,xaxt=\"n\",main=\"ACF for #calls daily\")\naxis(1, at = seq(0, 28, by = 1), las=2)\n\n#fitting seasonal ARIMA\nmodel<-arima(daily,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=7))\nmodel\ndescribe(residuals(model))\nplot(residuals(model))\n\n\n#hourly? \n#todo\n\n\n#for a sub set\nplot(coredata(daily)[200:300],type=\"l\",ylab=\"Num. of calls per day\",xlab=\"Series of 100 days (from 30 Jun)\",main = \"Real vs. predicted data(Seasonal ARIMA)\")\nlines(fitted(model)[200:300],col=\"red\")\n\n#for a sub set\nplot(coredata(daily)[400:500],type=\"l\")\nlines(fitted(model)[400:500],col=\"red\")\n\n#for a sub set\nplot(coredata(daily)[450:550],type=\"l\")\nlines(fitted(model)[450:550],col=\"red\")\n\n\n#check fit with Poisson Mondays 13-14\nd<-h[which(.indexhour(h)==13 & .indexwday(h)==1)]\ndescribe(d)\nplot(coredata(d),type = \"l\")\nspois<-rpois(577,mean(d))\nqqplot(spois,coredata(d),main=\"QQ plot - Pois(22.75) vs. Mondays 13-14)\", xlab = \"\",ylab = \"\")\nabline(0,1)\n\n#for longer period, there is NO FIT!\nqqplot(spois,coredata(dow[2]$Mon[\"T09:00/T18:00\"]),main=\"QQ plot - Pois(22.75) vs. Mondays 9-18)\", xlab = \"\",ylab = \"\")\nabline(0,1)\n\n",
+    "created" : 1498494983270.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1840421163",
+    "id" : "B8127967",
+    "lastKnownWriteTime" : 1498497891,
+    "last_content_update" : 1498497891046,
+    "path" : "W:/Code/GoodAI/callcenter_r/analyze_data.R",
+    "project_path" : "analyze_data.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

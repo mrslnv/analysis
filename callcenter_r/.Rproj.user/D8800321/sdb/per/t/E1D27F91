@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "# arima hours\nlibrary(lubridate)\nlibrary(zoo)\nlibrary(xts)\nlibrary(psych)\nlibrary(forecast)\nlibrary(xtsExtra)\n\n#ignore timezones (avoid the danger of using CET and struggle with daylight changes)\nSys.setenv(TZ='UTC')\n\ndt <- read.csv(\"time.csv\",stringsAsFactors = FALSE)\n\n#Create time series to analyze call frequency (XTS objects)\nt<-ymd_hms(dt$Time.of.calls)\nts <- xts(rep.int(1,length(t)),as.POSIXct(t))\n\nh<-period.apply(ts, endpoints(ts, \"hours\"), sum)\nhead(h)\n\nmodel<-arima(h,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=24*7))\nmodel\ndescribe(residuals(model))\nplot(fitted(model))\nstr(model)\n\nplot(coredata(h)[1:100],type=\"l\")\nlines(fitted(model)[450:550],col=\"red\")\nplot(fitted(model)[100:200],col=\"red\" )\nfit<-fitted(model)\n?arima.xts\nx<-predict(model,n.ahead = 96)\nup<-x$pred+2*x$se\ndown<-x$pred-2*x$se\nplot(x$pred,ylim=c(min(down),max(up)))\nlines(up,col=\"red\")\nlines(down,col=\"red\")\n\ntrain_d<-h[\"2015-12-14/2017-05-20\"]\ntest_d<-h[\"2017-05-20 00:00:00/2017-06-04 00:00:00\"]\ntrain_m<-arima(train_d,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=24*7))\n\npred<-predict(train_m,n.ahead= 96)\nt<-test_d[1:96]\nup<-pred$pred+2*pred$se\ndown<-pred$pred-2*pred$se\nlim<-c(min(down),max(up))\ndev.off()\nplot(t,ylim=lim)\nlines(t,col=\"yellow\",lwd=4)\nlines(index(t),coredata(pred$pred),col=\"red\")\nlines(index(t),coredata(down),col=\"blue\")\nlines(indraiex(t),coredata(up),col=\"orange\")\nplot(index(t),coredata(up),type=\"l\")\nplot(index(t),coredata(down),type=\"l\",ylim=lim)\n\nsmall<-h[\"2016-06-14/2016-09-20\"]\nplot(diff(small,7))\nplot(diff(small,7*24))\nplot(diff(small,24))\nplot(diff(diff(small,24),1))\nplot(diff(diff(small,7*24),1))\nplot(diff(diff(small,7*24),7*24))\nlines(diff(small,7*24),col=\"red\")\nlines(diff(diff(small,7*24),7*24),col=\"red\")\nacf(diff(small,7*24))\nacf(small)\n\nBox.test(resid(train_m),lag=7*24,type=\"Ljung\",fitdf = 2)\n\n",
+    "created" : 1498738969723.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4270517050",
+    "id" : "E1D27F91",
+    "lastKnownWriteTime" : 1499091336,
+    "last_content_update" : 1499091336364,
+    "path" : "W:/Code/GoodAI/callcenter_r/arima_hours.R",
+    "project_path" : "arima_hours.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

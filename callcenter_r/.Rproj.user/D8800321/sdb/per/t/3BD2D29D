@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "# extract features from raw weather warning data\n# merge with calls (in order to predict expected calls)\nlibrary(lubridate)\nlibrary(zoo)\nlibrary(xts)\nlibrary(stringr)\n\nSys.setenv(TZ='UTC')\n\n\nwe <- read.csv(\"weather_raw.csv\",stringsAsFactors = FALSE)\nwe$date<-as.Date(we$date,\"%b %d, %Y\")\ncodes<-str_split_fixed(we$code, \"-\", 4)\nwe$severity<-codes[,1]\nwe$tornado<-substring(codes[,2],2)\nwe$wind<-substring(codes[,3],2)\nwe$hail<-substring(codes[,4],2)\nwe$state_count<-as.data.frame(unlist(lapply(we$states,function(x) length(unlist(strsplit(x,\",\"))))))[,1]\nwe$nj<-as.data.frame(grepl(\"NJ\",we$states))[,1]\nwe$pa<-as.data.frame(grepl(\"PA\",we$states))[,1]\nwe$year<-as.data.frame(format(we$date,\"%Y\"))[,1]\nwe$month<-as.data.frame(format(we$date,\"%m\"))[,1]\nwe$day<-as.data.frame(format(we$date,\"%d\"))[,1]\n\n#write.csv(we,\"weather.csv\",row.names = FALSE)\n\n#join data\ndt <- read.csv(\"tz.csv\",stringsAsFactors = FALSE)\nt<-ymd_hms(dt$timeStamp)\nts <- xts(rep.int(1,length(t)),as.POSIXct(t))\ndaily<-apply.daily(ts,sum)\ndaily[c(head(we$date))]\nwe$calls<-as.data.frame(unlist(sapply(we$date,function(x) daily[as.character(x)])))[,1]\nView(we)\n#remove old textual columns\nwe$date<-NULL\nwe$code<-NULL\nwe$states<-NULL\nwe$severity<-as.data.frame(unlist(sapply(we$severity, switch, \"ENH\" = 4, \"HIGH\" = 6, \"MDT\" = 5, \n                                         \"MRGL\" = 2, \"SLGT\" = 3, \"TSTM\" = 1, USE.NAMES = F)))[,1]\n\nwrite.csv(we,\"weather_calls.csv\",row.names = FALSE)\n",
+    "created" : 1498506704852.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1939752481",
+    "id" : "3BD2D29D",
+    "lastKnownWriteTime" : 1498507339,
+    "last_content_update" : 1498507339984,
+    "path" : "W:/Code/GoodAI/callcenter_r/weather_extract_features.R",
+    "project_path" : "weather_extract_features.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
